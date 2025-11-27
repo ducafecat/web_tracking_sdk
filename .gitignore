@@ -52,3 +52,5 @@ lerna-debug.log*
 # 其他
 .turbo
 
+# 文档
+docs/
