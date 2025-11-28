@@ -70,11 +70,10 @@ export class TrackingSDK {
       return
     }
 
-    // 恢复用户 ID
-    this.currentUserId = this.storage.getUserId()
-
-    // 恢复未发送的事件
+    // 恢复用户 ID 和未发送的事件
     if (this.config.enableStorage) {
+      this.currentUserId = this.storage.getUserId()
+
       const pendingEvents = this.storage.getPendingEvents()
       if (pendingEvents.length > 0) {
         this.log(`恢复 ${pendingEvents.length} 个待发送事件`)
@@ -105,7 +104,9 @@ export class TrackingSDK {
    */
   public setUserId(userId: string): void {
     this.currentUserId = userId
-    this.storage.setUserId(userId)
+    if (this.config.enableStorage) {
+      this.storage.setUserId(userId)
+    }
     this.log('用户 ID 已设置:', userId)
   }
 
@@ -114,7 +115,9 @@ export class TrackingSDK {
    */
   public clearUserId(): void {
     this.currentUserId = null
-    this.storage.clearUserId()
+    if (this.config.enableStorage) {
+      this.storage.clearUserId()
+    }
     this.log('用户 ID 已清除')
   }
 
@@ -422,7 +425,25 @@ export class TrackingSDK {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`)
       }
 
-      const result = await response.json()
+      // 尝试解析 JSON 响应，如果失败则返回文本
+      const contentType = response.headers.get('content-type')
+      let result: any = {}
+
+      if (contentType && contentType.includes('application/json')) {
+        const text = await response.text()
+        if (text && text.trim()) {
+          try {
+            result = JSON.parse(text)
+          } catch (e) {
+            this.log(`JSON 解析失败，原始响应: ${text.substring(0, 100)}`)
+            result = { rawResponse: text }
+          }
+        }
+      } else {
+        const text = await response.text()
+        result = { rawResponse: text }
+      }
+
       return { success: true, ...result }
     } catch (error: any) {
       if (retries < this.config.maxRetries) {

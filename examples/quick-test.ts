@@ -20,11 +20,12 @@ async function quickTest() {
   // 1. 初始化 SDK
   console.log('📦 步骤 1: 初始化 SDK')
   const tracker = new TrackingSDK({
-    apiEndpoint: 'https://api-test.holink.com',
-    siteDomain: 'test.holink.com',
+    apiEndpoint: 'https://hl-to.8kds.com',
+    siteDomain: 'hl-app.8kds.com',
     debug: true,
     batchSize: 3,
     batchInterval: 2000,
+    enableStorage: false,
   })
 
   await tracker.init()
