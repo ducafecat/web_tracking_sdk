@@ -4,7 +4,7 @@ node_modules/
 .pnp.js
 
 # 构建输出
-dist/
+# dist/
 build/
 *.tsbuildinfo
 

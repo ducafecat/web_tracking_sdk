@@ -278,86 +278,93 @@ export class TrackingSDK {
   }
 
   /**
-   * 转换为后端 API 格式
-   * 关键方法：将业务事件转换为后端期望的扁平化数据结构
+   * 转换为后端 API 格式（扁平化结构）
+   * 关键方法：将业务事件转换为后端期望的扁平化数据结构，用于 URL 参数
    */
   private transformToPayload(event: BaseEvent): TrackingEventPayload {
     const isWindowAvailable = typeof window !== 'undefined'
     const isDocumentAvailable = typeof document !== 'undefined'
     const isNavigatorAvailable = typeof navigator !== 'undefined'
 
-    return {
-      // 事件类型
+    const payload: TrackingEventPayload = {
+      // 基础字段
       eventType: event.eventType,
-
-      // 站点域名（用于多站点统计）
       siteDomain: this.config.siteDomain,
-
-      // 用户标识（注意字段名是 x_uid）
       x_uid: event.uid,
-
-      // 链接 ID（注意字段名是 x_link_id）
       x_link_id: event.linkId,
-
-      // 时间戳
       timestamp: Date.now(),
-
-      // 请求 URI（页面路径 + 查询参数）
       uri: isWindowAvailable ? window.location.pathname + window.location.search : '',
-
-      // 请求来源（Referer，注意是单个 r）
       referer: isDocumentAvailable ? document.referrer || undefined : undefined,
-
-      // User-Agent
       userAgent: isNavigatorAvailable ? navigator.userAgent : '',
-
-      // 会话 ID
       sessionId: this.sessionId,
-
-      // 事件附加数据（可以包含额外的上下文信息）
-      eventData: {
-        ...event.eventData,
-        // 可选：添加额外的客户端信息
-        _clientInfo:
-          isWindowAvailable && isNavigatorAvailable
-            ? {
-                url: window.location.href,
-                screenResolution: `${window.screen.width}x${window.screen.height}`,
-                viewport: `${window.innerWidth}x${window.innerHeight}`,
-                language: navigator.language,
-                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                platform: navigator.platform,
-              }
-            : undefined,
-      },
     }
+
+    // 扁平化客户端信息
+    if (isWindowAvailable && isNavigatorAvailable) {
+      payload.url = window.location.href
+      payload.screenResolution = `${window.screen.width}x${window.screen.height}`
+      payload.viewport = `${window.innerWidth}x${window.innerHeight}`
+      payload.language = navigator.language
+      payload.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
+      payload.platform = navigator.platform
+    }
+
+    // 扁平化事件特定数据（将 eventData 中的字段展开到顶层）
+    if (event.eventData) {
+      Object.assign(payload, event.eventData)
+    }
+
+    return payload
   }
 
   /**
-   * 批量发送事件
+   * 批量发送事件（使用 GET + URL 参数，逐个发送）
    */
   private async sendBatch(events: TrackingEventPayload[]): Promise<void> {
     if (events.length === 0) return
 
-    const endpoint = `${this.config.apiEndpoint}/api/track/batch`
+    const endpoint = `${this.config.apiEndpoint}/api/track/event`
+    let successCount = 0
+    const failedEvents: TrackingEventPayload[] = []
 
     try {
-      const response = await this.sendRequest(endpoint, { events })
+      // 逐个发送事件（GET 请求不适合批量发送）
+      for (const event of events) {
+        try {
+          const response = await this.sendRequest(endpoint, event)
+          
+          if (response.success) {
+            successCount++
+          } else {
+            failedEvents.push(event)
+          }
+        } catch (error) {
+          this.error('事件上报失败:', error)
+          failedEvents.push(event)
+        }
+      }
 
-      if (response.success) {
-        this.log(`成功上报 ${events.length} 个事件`)
+      if (successCount > 0) {
+        this.log(`成功上报 ${successCount} 个事件`)
+      }
 
-        // 清除已发送的事件
+      if (failedEvents.length > 0) {
+        this.log(`失败 ${failedEvents.length} 个事件`)
+        
+        // 保存失败的事件到本地存储等待重试
+        if (this.config.enableStorage) {
+          this.storage.savePendingEvents(failedEvents)
+        }
+      } else {
+        // 全部成功，清除存储
         if (this.config.enableStorage) {
           this.storage.clearPendingEvents()
         }
-      } else {
-        throw new Error(response.message || '上报失败')
       }
     } catch (error) {
       this.error('批量上报失败:', error)
 
-      // 保存到本地存储等待重试
+      // 保存所有事件到本地存储等待重试
       if (this.config.enableStorage) {
         this.storage.savePendingEvents(events)
       }
@@ -410,12 +417,21 @@ export class TrackingSDK {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), this.config.timeout)
 
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
+      // 将数据转换为 URL 参数
+      const params = new URLSearchParams()
+      
+      Object.keys(data).forEach((key) => {
+        const value = data[key]
+        if (value !== undefined && value !== null) {
+          // 将所有值转换为字符串
+          params.append(key, String(value))
+        }
+      })
+
+      const fullUrl = `${url}?${params.toString()}`
+
+      const response = await fetch(fullUrl, {
+        method: 'GET',
         signal: controller.signal,
       })
 
@@ -425,7 +441,7 @@ export class TrackingSDK {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`)
       }
 
-      // 尝试解析 JSON 响应，如果失败则返回文本
+      // 尝试解析 JSON 响应，如果失败则返回成功
       const contentType = response.headers.get('content-type')
       let result: any = {}
 
@@ -441,14 +457,15 @@ export class TrackingSDK {
         }
       } else {
         const text = await response.text()
-        result = { rawResponse: text }
+        // 对于 GET 请求，空响应也视为成功
+        result = { rawResponse: text || 'OK' }
       }
 
       return { success: true, ...result }
     } catch (error: any) {
       if (retries < this.config.maxRetries) {
         this.log(`请求失败，重试 ${retries + 1}/${this.config.maxRetries}`)
-        await this.delay(1000 * Math.pow(2, retries)) // 指数退避
+        await this.delay(1000 * Math.pow(2, retries)) // 指数退败
         return this.sendRequest(url, data, retries + 1)
       }
 

@@ -9,14 +9,14 @@ import { TrackingSDK } from '../src'
 // 1. 初始化 SDK
 // ============================================
 const tracker = new TrackingSDK({
-  apiEndpoint: 'https://your-api.com',
-  siteDomain: 'holink.com', // 指定站点域名（可选，默认自动获取）
+  apiEndpoint: 'https://hl-to.8kds.com',
+  siteDomain: 'app.holink.com', // 指定站点域名（可选，默认自动获取）
   debug: true, // 开发环境开启调试
   batchSize: 10, // 批量上报阈值
   batchInterval: 5000, // 5秒自动上报
   autoPageView: true, // 自动采集页面访问
   autoClick: false, // 手动采集点击事件（推荐）
-  enableStorage: true, // 启用本地存储（支持离线重试）
+  enableStorage: false, // 启用本地存储（支持离线重试）
 })
 
 // 初始化 SDK
@@ -41,6 +41,10 @@ async function handleRegister(userId: string) {
   })
 }
 
+// 模拟用户注册
+await handleRegister('user_12345')
+console.info('✅ 用户注册事件已发送')
+
 // ============================================
 // 3. 用户订阅事件
 // ============================================
@@ -57,6 +61,10 @@ async function handleSubscribe(plan: string, duration: number, amount: number) {
   })
 }
 
+// 模拟用户订阅
+await handleSubscribe('pro', 12, 99.99)
+console.info('✅ 用户订阅事件已发送')
+
 // ============================================
 // 4. 用户登录事件
 // ============================================
@@ -70,12 +78,20 @@ async function handleLogin(userId: string, method: 'email' | 'phone') {
   })
 }
 
+// 模拟用户登录
+await handleLogin('user_12345', 'email')
+console.info('✅ 用户登录事件已发送')
+
 // ============================================
 // 5. 用户登出事件
 // ============================================
 async function handleLogout() {
   tracker.trackLogout()
 }
+
+// 模拟用户登出
+await handleLogout()
+console.info('✅ 用户登出事件已发送')
 
 // ============================================
 // 6. 页面访问事件（两种方式）

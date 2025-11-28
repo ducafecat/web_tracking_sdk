@@ -22,7 +22,7 @@ export enum EventType {
 }
 
 /**
- * 发送给后端的事件数据格式
+ * 发送给后端的事件数据格式（扁平化结构，用于 URL 参数）
  * 注意：必须与后端 UserEventMongo 接口匹配
  */
 export interface TrackingEventPayload {
@@ -53,8 +53,55 @@ export interface TrackingEventPayload {
   /** 会话 ID */
   sessionId: string
 
-  /** 事件附加数据（可选，存储特定事件的额外信息） */
-  eventData?: Record<string, any>
+  // ========== 扁平化的事件特定字段 ==========
+  
+  /** 注册来源（register 事件） */
+  source?: string
+
+  /** 订阅计划（subscribe 事件） */
+  plan?: string
+
+  /** 订阅时长/月（subscribe 事件） */
+  duration?: number
+
+  /** 订阅金额（subscribe 事件） */
+  amount?: number
+
+  /** 登录方式（login 事件） */
+  loginMethod?: string
+
+  /** 页面路径（visit 事件） */
+  path?: string
+
+  /** 页面标题（visit 事件） */
+  title?: string
+
+  /** 元素 ID（click 事件） */
+  elementId?: string
+
+  /** 元素文本（click 事件） */
+  elementText?: string
+
+  /** 页面 URL（客户端信息） */
+  url?: string
+
+  /** 屏幕分辨率（客户端信息） */
+  screenResolution?: string
+
+  /** 视口大小（客户端信息） */
+  viewport?: string
+
+  /** 浏览器语言（客户端信息） */
+  language?: string
+
+  /** 时区（客户端信息） */
+  timezone?: string
+
+  /** 平台（客户端信息） */
+  platform?: string
+
+  // 自定义事件的额外字段（可以动态添加）
+  [key: string]: any
 }
 
 /**
