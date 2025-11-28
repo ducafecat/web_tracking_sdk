@@ -29,6 +29,9 @@ export interface TrackingEventPayload {
   /** 事件类型 */
   eventType: string
 
+  /** 站点域名（用于多站点统计，例如：holink.com, holink.me） */
+  siteDomain?: string
+
   /** 用户 UID（业务系统的用户 ID）- 注意字段名是 x_uid */
   x_uid?: string
 
@@ -39,78 +42,121 @@ export interface TrackingEventPayload {
   timestamp: number
 
   /** 请求 URI（页面路径 + 查询参数） */
-  requestUri: string
+  uri: string
 
-  /** Referer（来源页面 URL） */
-  referer: string
+  /** 请求来源（Referer）- 注意是单个 r */
+  referer?: string
 
-  /** User-Agent（浏览器标识） */
+  /** 原始 User-Agent 字符串 */
   userAgent: string
 
-  /** 自定义数据（可选，JSON 字符串） */
-  customData?: string
+  /** 会话 ID */
+  sessionId: string
+
+  /** 事件附加数据（可选，存储特定事件的额外信息） */
+  eventData?: Record<string, any>
 }
 
 /**
- * 批量事件上报格式
+ * 基础事件接口（用于业务代码调用）
  */
-export interface BatchEventPayload {
-  /** 事件列表 */
-  events: TrackingEventPayload[]
-}
+export interface BaseEvent {
+  /** 事件类型 */
+  eventType: EventType | string
 
-/**
- * SDK 配置选项
- */
-export interface TrackingConfig {
-  /** API 端点 URL */
-  apiEndpoint: string
+  /** 用户 UID（业务系统的用户 ID） */
+  uid?: string
 
-  /** 默认链接 ID */
+  /** 链接 ID（业务标识） */
   linkId?: string
 
-  /** 批量上报阈值（事件数量） */
-  batchSize?: number
+  /** 事件附加数据 */
+  eventData?: Record<string, any>
+}
 
-  /** 批量上报时间间隔（毫秒） */
-  batchInterval?: number
+/** 注册事件 */
+export interface RegisterEvent extends BaseEvent {
+  eventType: EventType.REGISTER
+  /** 注册来源 */
+  source?: string
+}
 
-  /** 是否启用离线存储 */
-  enableStorage?: boolean
+/** 订阅事件 */
+export interface SubscribeEvent extends BaseEvent {
+  eventType: EventType.SUBSCRIBE
+  /** 订阅计划 */
+  plan?: string
+  /** 订阅时长（月） */
+  duration?: number
+  /** 订阅金额 */
+  amount?: number
+}
 
-  /** 存储适配器 */
-  storageAdapter?: StorageAdapter
+/** 登录事件 */
+export interface LoginEvent extends BaseEvent {
+  eventType: EventType.LOGIN
+  /** 登录方式 */
+  loginMethod?: 'email' | 'phone' | 'social' | 'sso'
+}
 
-  /** 是否自动采集页面访问 */
-  autoPageView?: boolean
+/** 页面访问事件 */
+export interface VisitEvent extends BaseEvent {
+  eventType: EventType.VISIT
+  /** 页面路径 */
+  path?: string
+  /** 页面标题 */
+  title?: string
+}
 
-  /** 是否自动采集点击事件 */
-  autoClick?: boolean
+/** 点击事件 */
+export interface ClickEvent extends BaseEvent {
+  eventType: EventType.CLICK
+  /** 元素 ID */
+  elementId?: string
+  /** 元素文本 */
+  elementText?: string
+}
+
+/** SDK 配置 */
+export interface TrackingConfig {
+  /** API 端点（例如：https://your-api.com） */
+  apiEndpoint: string
+
+  /** 站点域名（用于多站点统计，例如：'holink.com'）
+   * 如果不设置，SDK 会自动使用 window.location.hostname */
+  siteDomain?: string
 
   /** 是否启用调试模式 */
   debug?: boolean
 
-  /** 最大重试次数 */
+  /** 批量上报的事件数量阈值（默认：10） */
+  batchSize?: number
+
+  /** 批量上报的时间间隔（毫秒，默认：5000） */
+  batchInterval?: number
+
+  /** 是否自动采集页面访问事件（默认：true） */
+  autoPageView?: boolean
+
+  /** 是否自动采集点击事件（默认：false） */
+  autoClick?: boolean
+
+  /** 请求超时时间（毫秒，默认：10000） */
+  timeout?: number
+
+  /** 最大重试次数（默认：3） */
   maxRetries?: number
 
-  /** 重试延迟（毫秒） */
-  retryDelay?: number
+  /** 是否启用本地存储（默认：true） */
+  enableStorage?: boolean
+
+  /** 存储 key 前缀（默认：holink_track_） */
+  storagePrefix?: string
 }
 
-/**
- * 存储适配器接口
- */
-export interface StorageAdapter {
-  /** 获取数据 */
-  getItem(key: string): Promise<string | null> | string | null
-
-  /** 设置数据 */
-  setItem(key: string, value: string): Promise<void> | void
-
-  /** 删除数据 */
-  removeItem(key: string): Promise<void> | void
-
-  /** 清空数据 */
-  clear(): Promise<void> | void
+/** 事件上报响应 */
+export interface TrackingResponse {
+  success: boolean
+  message?: string
+  code?: number
 }
-
