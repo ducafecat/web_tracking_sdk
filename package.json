@@ -36,6 +36,9 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
+    "example:basic": "tsx examples/basic-usage.ts",
+    "example:test": "tsx examples/comprehensive-test.ts",
+    "example:quick": "tsx examples/quick-test.ts",
     "clean": "rm -rf dist",
     "prebuild": "yarn clean",
     "prepare": "husky",
@@ -58,6 +61,7 @@
     "lint-staged": "^15.2.9",
     "prettier": "^3.3.3",
     "tsup": "^8.2.4",
+    "tsx": "^4.7.0",
     "typescript": "^5.5.4",
     "vitest": "^2.0.5"
   },
