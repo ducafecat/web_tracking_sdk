@@ -48,7 +48,8 @@
 │  5. 来源域名提取 (refererDomain)                        │
 │  6. 来源类型分析 (refererType)                          │
 │  7. 日期生成 (date = YYYY-MM-DD)                        │
-│  8. 保存到 MongoDB (user_events 集合)                   │
+│  8. 站点域名识别 (siteDomain，用于多站点统计)          │
+│  9. 保存到 MongoDB (user_events 集合)                   │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -87,6 +88,9 @@ export enum EventType {
 export interface TrackingEventPayload {
   /** 事件类型 */
   eventType: string;
+
+  /** 站点域名（用于多站点统计，例如：holink.com, holink.me） */
+  siteDomain?: string;
 
   /** 用户 UID（业务系统的用户 ID）- 注意字段名是 x_uid */
   x_uid?: string;
@@ -178,6 +182,10 @@ export interface TrackingConfig {
   /** API 端点（例如：https://your-api.com） */
   apiEndpoint: string;
 
+  /** 站点域名（用于多站点统计，例如：'holink.com'）
+   * 如果不设置，SDK 会自动使用 window.location.hostname */
+  siteDomain?: string;
+
   /** 是否启用调试模式 */
   debug?: boolean;
 
@@ -254,6 +262,8 @@ export class TrackingSDK {
     // 合并默认配置
     this.config = {
       apiEndpoint: config.apiEndpoint,
+      siteDomain:
+        config.siteDomain || (typeof window !== 'undefined' ? window.location.hostname : ''),
       debug: config.debug ?? false,
       batchSize: config.batchSize ?? 10,
       batchInterval: config.batchInterval ?? 5000,
@@ -500,6 +510,9 @@ export class TrackingSDK {
     return {
       // 事件类型
       eventType: event.eventType,
+
+      // 站点域名（用于多站点统计）
+      siteDomain: this.config.siteDomain,
 
       // 用户标识（注意字段名是 x_uid）
       x_uid: event.uid,
@@ -995,6 +1008,7 @@ import { TrackingSDK } from './tracking-sdk';
 // 创建 SDK 实例
 const tracker = new TrackingSDK({
   apiEndpoint: 'https://your-api.com',
+  siteDomain: 'holink.com', // 指定站点域名（可选，默认自动获取）
   debug: process.env.NODE_ENV === 'development',
   batchSize: 10,
   batchInterval: 5000,
@@ -1036,6 +1050,7 @@ async function handleRegister(userId: string) {
 ```json
 {
   "eventType": "register",
+  "siteDomain": "holink.com",
   "x_uid": "user_123",
   "x_link_id": "register_form",
   "timestamp": 1700000000000,
@@ -1082,6 +1097,7 @@ async function handleSubscribe(plan: string, duration: number, amount: number) {
 ```json
 {
   "eventType": "subscribe",
+  "siteDomain": "holink.com",
   "x_uid": "user_123",
   "x_link_id": "subscribe_page",
   "timestamp": 1700000000000,
@@ -1203,6 +1219,7 @@ async function handleBatchTracking(req: Request, res: Response) {
     const processedEvents = events.map(event => ({
       // 客户端提供的字段
       eventType: event.eventType,
+      siteDomain: event.siteDomain || extractDomainFromRequest(req), // 站点域名（优先使用客户端提供）
       x_uid: event.x_uid,
       x_link_id: event.x_link_id,
       timestamp: event.timestamp,
@@ -1250,6 +1267,14 @@ function getClientIp(req: Request): string {
     req.socket.remoteAddress ||
     ''
   );
+}
+
+/**
+ * 从请求中提取域名（用作站点域名的后备方案）
+ */
+function extractDomainFromRequest(req: Request): string {
+  const host = req.headers.host || '';
+  return host.split(':')[0]; // 移除端口号
 }
 
 /**
@@ -1329,6 +1354,7 @@ async function handleSingleTracking(req: Request, res: Response) {
     const userEvent = {
       // 客户端提供的字段
       ...event,
+      siteDomain: event.siteDomain || extractDomainFromRequest(req), // 站点域名（优先使用客户端提供）
 
       // 服务端生成的字段
       date: new Date(event.timestamp).toISOString().split('T')[0],
@@ -1368,6 +1394,7 @@ async function handleSingleTracking(req: Request, res: Response) {
 ├─────────────────────────────────────────────────────────────┤
 │ {                                                            │
 │   eventType: "register",                                     │
+│   siteDomain: "holink.com",                                  │
 │   x_uid: "user_123",                                         │
 │   x_link_id: "register_form",                                │
 │   timestamp: 1700000000000,                                  │
@@ -1399,6 +1426,7 @@ async function handleSingleTracking(req: Request, res: Response) {
 │ {                                                            │
 │   _id: ObjectId("..."),                                      │
 │   eventType: "register",                                     │
+│   siteDomain: "holink.com",                                  │
 │   x_uid: "user_123",                                         │
 │   x_link_id: "register_form",                                │
 │   timestamp: 1700000000000,                                  │
@@ -1433,6 +1461,7 @@ async function handleSingleTracking(req: Request, res: Response) {
 | SDK 字段               | 后端字段        | 来源   | 说明                        |
 | ---------------------- | --------------- | ------ | --------------------------- |
 | `eventType`            | `eventType`     | 客户端 | 事件类型                    |
+| `siteDomain`           | `siteDomain`    | 客户端 | 站点域名（多站点统计）      |
 | `uid` → `x_uid`        | `x_uid`         | 客户端 | 用户 UID（业务系统 ID）     |
 | `linkId` → `x_link_id` | `x_link_id`     | 客户端 | 链接 ID（业务标识）         |
 | `timestamp`            | `timestamp`     | 客户端 | 事件时间戳（毫秒）          |

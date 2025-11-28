@@ -45,9 +45,13 @@ export default defineNuxtPlugin({
   async setup(nuxtApp) {
     const config = useRuntimeConfig();
 
+    // 根据当前域名自动选择配置（用于多站点统计）
+    const currentDomain = process.client ? window.location.hostname : '';
+
     // 创建 SDK 实例
     const tracker = new TrackingSDK({
       apiEndpoint: config.public.trackingApiEndpoint as string,
+      siteDomain: currentDomain, // 自动设置当前站点域名
       debug: config.public.trackingDebug === 'true',
       batchSize: 10,
       batchInterval: 5000,
@@ -227,6 +231,9 @@ export default defineNuxtConfig({
         process.env.NUXT_PUBLIC_TRACKING_API_ENDPOINT || 'https://api.your-domain.com',
       // 是否启用调试模式
       trackingDebug: process.env.NODE_ENV === 'development' ? 'true' : 'false',
+
+      // 可选：如果需要手动指定站点域名，可以添加此配置
+      // trackingSiteDomain: process.env.NUXT_PUBLIC_TRACKING_SITE_DOMAIN,
     },
   },
 
@@ -248,6 +255,9 @@ export default defineNuxtConfig({
 ```bash
 # .env
 NUXT_PUBLIC_TRACKING_API_ENDPOINT=https://api.your-domain.com
+
+# 可选：手动指定站点域名（如果不设置，将自动使用当前访问的域名）
+# NUXT_PUBLIC_TRACKING_SITE_DOMAIN=holink.com
 ```
 
 ### 五、使用示例
@@ -753,6 +763,7 @@ const tracker = new TrackingSDK({
 8. ✅ **自动导入**：Nuxt 自动导入组合式函数
 9. ✅ **灵活的点击追踪**：支持多种 `trackClick` 调用方式
 10. ✅ **完全兼容 SDK v1.1.0**：与最新 SDK 设计完全匹配
+11. ✅ **多站点支持**：自动识别当前域名，支持 holink.com、holink.me 等多站点统计
 
 现在您可以直接复制这些代码到您的 Nuxt 4 项目中使用了！
 
