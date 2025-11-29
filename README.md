@@ -1,5 +1,9 @@
 # @holink/tracking-sdk
 
+## npm
+
+<https://www.npmjs.com/package/@holink/tracking-sdk>
+
 > 🎯 用户行为埋点 SDK - 用于追踪用户的注册、订阅、登录等关键行为
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5+-blue.svg)](https://www.typescriptlang.org/)
@@ -463,4 +467,3 @@ ducafecat
 ---
 
 如有问题或建议，请提交 Issue 或联系作者。
-
