@@ -3,7 +3,7 @@
  * 用于持久化用户 ID 和待发送事件
  */
 
-import { TrackingEventPayload } from './types'
+import type { TrackingEventPayload } from './types'
 
 export class StorageManager {
   private prefix: string

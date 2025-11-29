@@ -3,7 +3,7 @@
  * 负责批量上报和队列管理
  */
 
-import { TrackingEventPayload } from './types'
+import type { TrackingEventPayload } from './types'
 
 interface EventQueueConfig {
   batchSize: number

@@ -8,8 +8,8 @@
  * 3. 支持批量上报、离线重试、本地存储
  */
 
-import {
-  EventType,
+import { EventType } from './types'
+import type {
   BaseEvent,
   RegisterEvent,
   SubscribeEvent,

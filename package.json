@@ -1,6 +1,6 @@
 {
   "name": "@holink/tracking-sdk",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "现代化的网站埋点 TypeScript SDK,支持自动采集、批量上报、离线重试",
   "keywords": ["tracking", "analytics", "埋点", "数据采集", "sdk"],
   "license": "MIT",

@@ -12,10 +12,10 @@ export { EventQueue } from './EventQueue'
 // 本地存储管理器
 export { StorageManager } from './StorageManager'
 
-// 枚举类型
+// 枚举类型 - 必须单独导出，因为枚举在运行时存在
 export { EventType } from './types'
 
-// 导出所有类型定义
+// 导出所有接口类型 - 使用 export type 确保这些只在编译时使用
 export type {
   TrackingConfig,
   TrackingEventPayload,
