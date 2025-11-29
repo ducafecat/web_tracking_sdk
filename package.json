@@ -9,6 +9,17 @@
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ducafecat/web_tracking_sdkt"
+  },
+  "bugs": {
+    "url": "https://github.com/ducafecat/web_tracking_sdk/issues"
+  },
+  "homepage": "https://github.com/ducafecat/web_tracking_sdk#readme",
   "exports": {
     ".": {
       "import": {
