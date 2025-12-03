@@ -82,6 +82,9 @@ export interface TrackingEventPayload {
   /** 元素文本（click 事件） */
   elementText?: string
 
+  /** 元素类型（click 事件，例如：button, a, div） */
+  elementType?: string
+
   /** 页面 URL（客户端信息） */
   url?: string
 
@@ -162,6 +165,8 @@ export interface ClickEvent extends BaseEvent {
   elementId?: string
   /** 元素文本 */
   elementText?: string
+  /** 元素类型（例如：button, a, div） */
+  elementType?: string
 }
 
 /** SDK 配置 */

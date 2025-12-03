@@ -114,6 +114,7 @@ tracker.trackClick('subscribe_button')
 tracker.trackClick({
   elementId: 'buy_now_button',
   elementText: '立即购买',
+  elementType: 'button', // 元素类型（例如：button, a, div）
   linkId: 'pricing_page',
   eventData: {
     productId: 'prod_123',

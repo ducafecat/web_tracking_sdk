@@ -64,7 +64,7 @@ export class TrackingSDK {
   /**
    * 初始化 SDK
    */
-  public async init(): Promise<void> {
+  public init(): void {
     if (this.isInitialized) {
       this.log('SDK 已初始化')
       return
@@ -216,7 +216,7 @@ export class TrackingSDK {
    * 追踪点击事件
    */
   public trackClick(data: Partial<ClickEvent> | string): void {
-    let event: BaseEvent
+    let event: ClickEvent
 
     if (typeof data === 'string') {
       // 简单用法：只传递元素 ID
@@ -224,22 +224,23 @@ export class TrackingSDK {
         eventType: EventType.CLICK,
         uid: this.currentUserId || undefined,
         linkId: 'click_event',
-        eventData: {
-          elementId: data,
-        },
+        elementId: data,
       }
     } else {
       // 完整用法：传递对象
-      event = {
+      const clickEvent: ClickEvent = {
         eventType: EventType.CLICK,
         uid: data.uid || this.currentUserId || undefined,
         linkId: data.linkId || 'click_event',
-        eventData: {
-          elementId: data.elementId,
-          elementText: data.elementText,
-          ...data.eventData,
-        },
       }
+
+      // 添加可选字段
+      if (data.elementId !== undefined) clickEvent.elementId = data.elementId
+      if (data.elementText !== undefined) clickEvent.elementText = data.elementText
+      if (data.elementType !== undefined) clickEvent.elementType = data.elementType as string
+      if (data.eventData !== undefined) clickEvent.eventData = data.eventData
+
+      event = clickEvent
     }
 
     this.track(event)
@@ -248,11 +249,11 @@ export class TrackingSDK {
   /**
    * 追踪自定义事件
    */
-  public trackCustom(eventName: string, data: Record<string, any> = {}): void {
+  public trackCustom(eventName: string, data: Record<string, unknown> = {}): void {
     const event: BaseEvent = {
       eventType: eventName,
       uid: this.currentUserId || undefined,
-      linkId: data.linkId || 'custom',
+      linkId: (data.linkId as string) || 'custom',
       eventData: data,
     }
 
@@ -309,6 +310,18 @@ export class TrackingSDK {
       payload.platform = navigator.platform
     }
 
+    // 扁平化事件特定字段（从事件对象顶层复制到 payload）
+    // 处理 ClickEvent 的特定字段
+    if ('elementId' in event && event.elementId !== undefined) {
+      payload.elementId = event.elementId as string
+    }
+    if ('elementText' in event && event.elementText !== undefined) {
+      payload.elementText = event.elementText as string
+    }
+    if ('elementType' in event && event.elementType !== undefined) {
+      payload.elementType = event.elementType as string
+    }
+
     // 扁平化事件特定数据（将 eventData 中的字段展开到顶层）
     if (event.eventData) {
       Object.assign(payload, event.eventData)
@@ -332,7 +345,7 @@ export class TrackingSDK {
       for (const event of events) {
         try {
           const response = await this.sendRequest(endpoint, event)
-          
+
           if (response.success) {
             successCount++
           } else {
@@ -350,7 +363,7 @@ export class TrackingSDK {
 
       if (failedEvents.length > 0) {
         this.log(`失败 ${failedEvents.length} 个事件`)
-        
+
         // 保存失败的事件到本地存储等待重试
         if (this.config.enableStorage) {
           this.storage.savePendingEvents(failedEvents)
@@ -394,11 +407,11 @@ export class TrackingSDK {
     const baseUrl = this.config.apiEndpoint
 
     switch (eventType) {
-      case EventType.REGISTER:
+      case 'register':
         return `${baseUrl}/api/track/register`
-      case EventType.SUBSCRIBE:
+      case 'subscribe':
         return `${baseUrl}/api/track/subscribe`
-      case EventType.LOGIN:
+      case 'login':
         return `${baseUrl}/api/track/login`
       default:
         return `${baseUrl}/api/track/batch`
@@ -410,7 +423,7 @@ export class TrackingSDK {
    */
   private async sendRequest(
     url: string,
-    data: any,
+    data: Record<string, unknown>,
     retries: number = 0
   ): Promise<TrackingResponse> {
     try {
@@ -419,9 +432,9 @@ export class TrackingSDK {
 
       // 将数据转换为 URL 参数
       const params = new URLSearchParams()
-      
+
       Object.keys(data).forEach((key) => {
-        const value = data[key]
+        const value: unknown = data[key]
         if (value !== undefined && value !== null) {
           // 将所有值转换为字符串
           params.append(key, String(value))
@@ -443,13 +456,13 @@ export class TrackingSDK {
 
       // 尝试解析 JSON 响应，如果失败则返回成功
       const contentType = response.headers.get('content-type')
-      let result: any = {}
+      let result: Record<string, unknown> = {}
 
       if (contentType && contentType.includes('application/json')) {
         const text = await response.text()
         if (text && text.trim()) {
           try {
-            result = JSON.parse(text)
+            result = JSON.parse(text) as Record<string, unknown>
           } catch (e) {
             this.log(`JSON 解析失败，原始响应: ${text.substring(0, 100)}`)
             result = { rawResponse: text }
@@ -461,11 +474,11 @@ export class TrackingSDK {
         result = { rawResponse: text || 'OK' }
       }
 
-      return { success: true, ...result }
-    } catch (error: any) {
+      return { success: true, ...result } as TrackingResponse
+    } catch (error: unknown) {
       if (retries < this.config.maxRetries) {
         this.log(`请求失败，重试 ${retries + 1}/${this.config.maxRetries}`)
-        await this.delay(1000 * Math.pow(2, retries)) // 指数退败
+        await this.delay(1000 * Math.pow(2, retries)) // 指数退避
         return this.sendRequest(url, data, retries + 1)
       }
 
@@ -519,6 +532,7 @@ export class TrackingSDK {
           this.trackClick({
             elementId,
             elementText: elementText.substring(0, 50), // 限制长度
+            elementType: elementTag, // 添加元素类型
             eventData: {
               elementTag,
               elementClass: target.className,
@@ -538,17 +552,18 @@ export class TrackingSDK {
     if (typeof window === 'undefined' || typeof history === 'undefined') return
 
     // 监听 History API
-    const originalPushState = history.pushState
-    const originalReplaceState = history.replaceState
+    const originalPushState = history.pushState.bind(history)
+    const originalReplaceState = history.replaceState.bind(history)
+    const trackVisit = this.trackVisit.bind(this)
 
-    history.pushState = (...args) => {
-      originalPushState.apply(history, args)
-      this.trackVisit()
+    history.pushState = (...args: Parameters<typeof history.pushState>) => {
+      originalPushState(...args)
+      trackVisit()
     }
 
-    history.replaceState = (...args) => {
-      originalReplaceState.apply(history, args)
-      this.trackVisit()
+    history.replaceState = (...args: Parameters<typeof history.replaceState>) => {
+      originalReplaceState(...args)
+      trackVisit()
     }
 
     // 监听 popstate（浏览器前进后退）
@@ -599,8 +614,9 @@ export class TrackingSDK {
   /**
    * 日志输出
    */
-  private log(...args: any[]): void {
+  private log(...args: unknown[]): void {
     if (this.config.debug) {
+      // eslint-disable-next-line no-console
       console.log('[TrackingSDK]', ...args)
     }
   }
@@ -608,7 +624,7 @@ export class TrackingSDK {
   /**
    * 错误日志
    */
-  private error(...args: any[]): void {
+  private error(...args: unknown[]): void {
     if (this.config.debug) {
       console.error('[TrackingSDK]', ...args)
     }

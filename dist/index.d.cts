@@ -60,6 +60,8 @@ interface TrackingEventPayload {
     elementId?: string;
     /** 元素文本（click 事件） */
     elementText?: string;
+    /** 元素类型（click 事件，例如：button, a, div） */
+    elementType?: string;
     /** 页面 URL（客户端信息） */
     url?: string;
     /** 屏幕分辨率（客户端信息） */
@@ -124,6 +126,8 @@ interface ClickEvent extends BaseEvent {
     elementId?: string;
     /** 元素文本 */
     elementText?: string;
+    /** 元素类型（例如：button, a, div） */
+    elementType?: string;
 }
 /** SDK 配置 */
 interface TrackingConfig {
@@ -179,7 +183,7 @@ declare class TrackingSDK {
     /**
      * 初始化 SDK
      */
-    init(): Promise<void>;
+    init(): void;
     /**
      * 设置用户 ID
      */
@@ -219,7 +223,7 @@ declare class TrackingSDK {
     /**
      * 追踪自定义事件
      */
-    trackCustom(eventName: string, data?: Record<string, any>): void;
+    trackCustom(eventName: string, data?: Record<string, unknown>): void;
     /**
      * 通用追踪方法（核心方法）
      */

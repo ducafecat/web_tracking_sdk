@@ -221,7 +221,7 @@ var _TrackingSDK = class _TrackingSDK {
   /**
    * 初始化 SDK
    */
-  async init() {
+  init() {
     if (this.isInitialized) {
       this.log("SDK \u5DF2\u521D\u59CB\u5316");
       return;
@@ -355,21 +355,19 @@ var _TrackingSDK = class _TrackingSDK {
         eventType: "click" /* CLICK */,
         uid: this.currentUserId || void 0,
         linkId: "click_event",
-        eventData: {
-          elementId: data
-        }
+        elementId: data
       };
     } else {
-      event = {
+      const clickEvent = {
         eventType: "click" /* CLICK */,
         uid: data.uid || this.currentUserId || void 0,
-        linkId: data.linkId || "click_event",
-        eventData: {
-          elementId: data.elementId,
-          elementText: data.elementText,
-          ...data.eventData
-        }
+        linkId: data.linkId || "click_event"
       };
+      if (data.elementId !== void 0) clickEvent.elementId = data.elementId;
+      if (data.elementText !== void 0) clickEvent.elementText = data.elementText;
+      if (data.elementType !== void 0) clickEvent.elementType = data.elementType;
+      if (data.eventData !== void 0) clickEvent.eventData = data.eventData;
+      event = clickEvent;
     }
     this.track(event);
   }
@@ -423,6 +421,15 @@ var _TrackingSDK = class _TrackingSDK {
       payload.language = navigator.language;
       payload.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       payload.platform = navigator.platform;
+    }
+    if ("elementId" in event && event.elementId !== void 0) {
+      payload.elementId = event.elementId;
+    }
+    if ("elementText" in event && event.elementText !== void 0) {
+      payload.elementText = event.elementText;
+    }
+    if ("elementType" in event && event.elementType !== void 0) {
+      payload.elementType = event.elementType;
     }
     if (event.eventData) {
       Object.assign(payload, event.eventData);
@@ -491,11 +498,11 @@ var _TrackingSDK = class _TrackingSDK {
   getEventEndpoint(eventType) {
     const baseUrl = this.config.apiEndpoint;
     switch (eventType) {
-      case "register" /* REGISTER */:
+      case "register":
         return `${baseUrl}/api/track/register`;
-      case "subscribe" /* SUBSCRIBE */:
+      case "subscribe":
         return `${baseUrl}/api/track/subscribe`;
-      case "login" /* LOGIN */:
+      case "login":
         return `${baseUrl}/api/track/login`;
       default:
         return `${baseUrl}/api/track/batch`;
@@ -584,6 +591,8 @@ var _TrackingSDK = class _TrackingSDK {
             elementId,
             elementText: elementText.substring(0, 50),
             // 限制长度
+            elementType: elementTag,
+            // 添加元素类型
             eventData: {
               elementTag,
               elementClass: target.className,
@@ -600,15 +609,16 @@ var _TrackingSDK = class _TrackingSDK {
    */
   setupPageViewListener() {
     if (typeof window === "undefined" || typeof history === "undefined") return;
-    const originalPushState = history.pushState;
-    const originalReplaceState = history.replaceState;
+    const originalPushState = history.pushState.bind(history);
+    const originalReplaceState = history.replaceState.bind(history);
+    const trackVisit = this.trackVisit.bind(this);
     history.pushState = (...args) => {
-      originalPushState.apply(history, args);
-      this.trackVisit();
+      originalPushState(...args);
+      trackVisit();
     };
     history.replaceState = (...args) => {
-      originalReplaceState.apply(history, args);
-      this.trackVisit();
+      originalReplaceState(...args);
+      trackVisit();
     };
     window.addEventListener("popstate", () => {
       this.trackVisit();
