@@ -54,7 +54,7 @@ export interface TrackingEventPayload {
   sessionId: string
 
   // ========== 扁平化的事件特定字段 ==========
-  
+
   /** 注册来源（register 事件） */
   source?: string
 

@@ -191,7 +191,7 @@ export class TrackingSDK {
   /**
    * 追踪页面访问事件
    */
-  public trackVisit(path?: string, title?: string): void {
+  public trackVisit(path?: string, title?: string, data_id?: string): void {
     const event: BaseEvent = {
       eventType: EventType.VISIT,
       uid: this.currentUserId || undefined,
@@ -199,6 +199,7 @@ export class TrackingSDK {
       eventData: {
         path: path || (typeof window !== 'undefined' ? window.location.pathname : ''),
         title: title || (typeof document !== 'undefined' ? document.title : ''),
+        data_id: data_id,
       },
     }
 
@@ -208,8 +209,8 @@ export class TrackingSDK {
   /**
    * 追踪页面访问事件（trackVisit 的别名，兼容 Nuxt 集成）
    */
-  public trackPageView(path?: string, title?: string): void {
-    this.trackVisit(path, title)
+  public trackPageView(path?: string, title?: string, data_id?: string): void {
+    this.trackVisit(path, title, data_id)
   }
 
   /**
