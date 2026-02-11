@@ -211,11 +211,11 @@ declare class TrackingSDK {
     /**
      * 追踪页面访问事件
      */
-    trackVisit(path?: string, title?: string): void;
+    trackVisit(path?: string, title?: string, data_id?: string): void;
     /**
      * 追踪页面访问事件（trackVisit 的别名，兼容 Nuxt 集成）
      */
-    trackPageView(path?: string, title?: string): void;
+    trackPageView(path?: string, title?: string, data_id?: string): void;
     /**
      * 追踪点击事件
      */

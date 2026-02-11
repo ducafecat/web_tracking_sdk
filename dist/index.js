@@ -300,14 +300,15 @@ var _TrackingSDK = class _TrackingSDK {
   /**
    * 追踪页面访问事件
    */
-  trackVisit(path, title) {
+  trackVisit(path, title, data_id) {
     const event = {
       eventType: "visit" /* VISIT */,
       uid: this.currentUserId || void 0,
       linkId: "page_view",
       eventData: {
         path: path || (typeof window !== "undefined" ? window.location.pathname : ""),
-        title: title || (typeof document !== "undefined" ? document.title : "")
+        title: title || (typeof document !== "undefined" ? document.title : ""),
+        data_id
       }
     };
     this.track(event);
@@ -315,8 +316,8 @@ var _TrackingSDK = class _TrackingSDK {
   /**
    * 追踪页面访问事件（trackVisit 的别名，兼容 Nuxt 集成）
    */
-  trackPageView(path, title) {
-    this.trackVisit(path, title);
+  trackPageView(path, title, data_id) {
+    this.trackVisit(path, title, data_id);
   }
   /**
    * 追踪点击事件
