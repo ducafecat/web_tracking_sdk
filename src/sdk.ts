@@ -495,6 +495,45 @@ export class TrackingSDK {
   }
 
   /**
+   * 获取当前会话 ID
+   */
+  public getSessionId(): string {
+    return this.sessionId
+  }
+
+  /**
+   * 通过 sendBeacon 发送事件（用于页面关闭场景）
+   */
+  public sendBeacon(eventType: string, data: Record<string, unknown> = {}): boolean {
+    if (typeof navigator === 'undefined' || typeof navigator.sendBeacon !== 'function') {
+      return false
+    }
+
+    const event: BaseEvent = {
+      eventType,
+      uid: this.currentUserId || undefined,
+      linkId: (data.linkId as string) || eventType,
+      eventData: data,
+    }
+
+    const payload = this.transformToPayload(event)
+    const body = JSON.stringify(payload)
+    const blob = new Blob([body], { type: 'application/json' })
+    const endpoint = `${this.config.apiEndpoint}/api/track/beacon`
+
+    const success = navigator.sendBeacon(endpoint, blob)
+    this.log('sendBeacon 发送:', success ? '成功' : '失败', payload)
+    return success
+  }
+
+  /**
+   * 获取 beacon 端点地址
+   */
+  public getBeaconEndpoint(): string {
+    return `${this.config.apiEndpoint}/api/track/beacon`
+  }
+
+  /**
    * 销毁 SDK
    */
   public destroy(): void {
