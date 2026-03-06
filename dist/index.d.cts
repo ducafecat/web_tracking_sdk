@@ -4,19 +4,13 @@
  */
 /** 事件类型枚举 */
 declare enum EventType {
-    /** 用户注册 */
     REGISTER = "register",
-    /** 用户订阅 */
     SUBSCRIBE = "subscribe",
-    /** 用户登录 */
     LOGIN = "login",
-    /** 用户登出 */
     LOGOUT = "logout",
-    /** 页面访问 */
     VISIT = "visit",
-    /** 点击事件 */
     CLICK = "click",
-    /** 自定义事件 */
+    PAGE_STAY = "page_stay",
     CUSTOM = "custom"
 }
 /**
@@ -122,12 +116,20 @@ interface VisitEvent extends BaseEvent {
 /** 点击事件 */
 interface ClickEvent extends BaseEvent {
     eventType: EventType.CLICK;
-    /** 元素 ID */
     elementId?: string;
-    /** 元素文本 */
     elementText?: string;
-    /** 元素类型（例如：button, a, div） */
     elementType?: string;
+}
+/** 页面停留事件 */
+interface PageStayEvent extends BaseEvent {
+    eventType: EventType.PAGE_STAY;
+    path: string;
+    toPath?: string;
+    enterAt: number;
+    leaveAt: number;
+    durationMs: number;
+    activeMs: number;
+    leaveReason: 'route_change' | 'pagehide';
 }
 /** SDK 配置 */
 interface TrackingConfig {
@@ -221,6 +223,14 @@ declare class TrackingSDK {
      */
     trackClick(data: Partial<ClickEvent> | string): void;
     /**
+     * 追踪页面停留事件
+     */
+    trackPageStay(data: Omit<PageStayEvent, 'eventType'>): void;
+    /**
+     * 通过 sendBeacon 发送页面停留事件（用于页面关闭场景）
+     */
+    sendPageStayBeacon(data: Omit<PageStayEvent, 'eventType'>): boolean;
+    /**
      * 追踪自定义事件
      */
     trackCustom(eventName: string, data?: Record<string, unknown>): void;
@@ -253,6 +263,18 @@ declare class TrackingSDK {
      * 手动刷新队列（立即发送所有待发送事件）
      */
     flush(): void;
+    /**
+     * 获取当前会话 ID
+     */
+    getSessionId(): string;
+    /**
+     * 通过 sendBeacon 发送事件（用于页面关闭场景）
+     */
+    sendBeacon(eventType: string, data?: Record<string, unknown>): boolean;
+    /**
+     * 获取 beacon 端点地址
+     */
+    getBeaconEndpoint(): string;
     /**
      * 销毁 SDK
      */
@@ -373,4 +395,4 @@ declare class StorageManager {
     private removeItem;
 }
 
-export { type BaseEvent, type ClickEvent, EventQueue, EventType, type LoginEvent, type RegisterEvent, StorageManager, type SubscribeEvent, type TrackingConfig, type TrackingEventPayload, type TrackingResponse, TrackingSDK, type VisitEvent };
+export { type BaseEvent, type ClickEvent, EventQueue, EventType, type LoginEvent, type PageStayEvent, type RegisterEvent, StorageManager, type SubscribeEvent, type TrackingConfig, type TrackingEventPayload, type TrackingResponse, TrackingSDK, type VisitEvent };

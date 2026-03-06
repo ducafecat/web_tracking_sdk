@@ -48,7 +48,7 @@ export class StorageManager {
     if (!data) return []
 
     try {
-      return JSON.parse(data)
+      return JSON.parse(data) as TrackingEventPayload[]
     } catch {
       return []
     }

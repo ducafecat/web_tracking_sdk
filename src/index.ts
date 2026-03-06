@@ -26,4 +26,5 @@ export type {
   LoginEvent,
   VisitEvent,
   ClickEvent,
+  PageStayEvent,
 } from './types'

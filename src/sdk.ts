@@ -15,6 +15,7 @@ import type {
   SubscribeEvent,
   LoginEvent,
   ClickEvent,
+  PageStayEvent,
   TrackingConfig,
   TrackingResponse,
   TrackingEventPayload,
@@ -238,13 +239,53 @@ export class TrackingSDK {
       // 添加可选字段
       if (data.elementId !== undefined) clickEvent.elementId = data.elementId
       if (data.elementText !== undefined) clickEvent.elementText = data.elementText
-      if (data.elementType !== undefined) clickEvent.elementType = data.elementType as string
+      if (data.elementType !== undefined) clickEvent.elementType = data.elementType
       if (data.eventData !== undefined) clickEvent.eventData = data.eventData
 
       event = clickEvent
     }
 
     this.track(event)
+  }
+
+  /**
+   * 追踪页面停留事件
+   */
+  public trackPageStay(data: Omit<PageStayEvent, 'eventType'>): void {
+    const event: BaseEvent = {
+      eventType: EventType.PAGE_STAY,
+      uid: this.currentUserId || undefined,
+      linkId: 'page_stay',
+      eventData: {
+        path: data.path,
+        toPath: data.toPath,
+        enterAt: data.enterAt,
+        leaveAt: data.leaveAt,
+        durationMs: data.durationMs,
+        activeMs: data.activeMs,
+        leaveReason: data.leaveReason,
+        ...data.eventData,
+      },
+    }
+
+    this.track(event)
+  }
+
+  /**
+   * 通过 sendBeacon 发送页面停留事件（用于页面关闭场景）
+   */
+  public sendPageStayBeacon(data: Omit<PageStayEvent, 'eventType'>): boolean {
+    return this.sendBeacon(EventType.PAGE_STAY, {
+      linkId: 'page_stay',
+      path: data.path,
+      toPath: data.toPath,
+      enterAt: data.enterAt,
+      leaveAt: data.leaveAt,
+      durationMs: data.durationMs,
+      activeMs: data.activeMs,
+      leaveReason: data.leaveReason,
+      ...data.eventData,
+    })
   }
 
   /**
@@ -641,7 +682,7 @@ export class TrackingSDK {
    * 生成会话 ID
    */
   private generateSessionId(): string {
-    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
   }
 
   /**

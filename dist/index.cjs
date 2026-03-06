@@ -36,6 +36,7 @@ var EventType = /* @__PURE__ */ ((EventType2) => {
   EventType2["LOGOUT"] = "logout";
   EventType2["VISIT"] = "visit";
   EventType2["CLICK"] = "click";
+  EventType2["PAGE_STAY"] = "page_stay";
   EventType2["CUSTOM"] = "custom";
   return EventType2;
 })(EventType || {});
@@ -373,6 +374,43 @@ var _TrackingSDK = class _TrackingSDK {
     this.track(event);
   }
   /**
+   * 追踪页面停留事件
+   */
+  trackPageStay(data) {
+    const event = {
+      eventType: "page_stay" /* PAGE_STAY */,
+      uid: this.currentUserId || void 0,
+      linkId: "page_stay",
+      eventData: {
+        path: data.path,
+        toPath: data.toPath,
+        enterAt: data.enterAt,
+        leaveAt: data.leaveAt,
+        durationMs: data.durationMs,
+        activeMs: data.activeMs,
+        leaveReason: data.leaveReason,
+        ...data.eventData
+      }
+    };
+    this.track(event);
+  }
+  /**
+   * 通过 sendBeacon 发送页面停留事件（用于页面关闭场景）
+   */
+  sendPageStayBeacon(data) {
+    return this.sendBeacon("page_stay" /* PAGE_STAY */, {
+      linkId: "page_stay",
+      path: data.path,
+      toPath: data.toPath,
+      enterAt: data.enterAt,
+      leaveAt: data.leaveAt,
+      durationMs: data.durationMs,
+      activeMs: data.activeMs,
+      leaveReason: data.leaveReason,
+      ...data.eventData
+    });
+  }
+  /**
    * 追踪自定义事件
    */
   trackCustom(eventName, data = {}) {
@@ -565,6 +603,39 @@ var _TrackingSDK = class _TrackingSDK {
     this.eventQueue.flush();
   }
   /**
+   * 获取当前会话 ID
+   */
+  getSessionId() {
+    return this.sessionId;
+  }
+  /**
+   * 通过 sendBeacon 发送事件（用于页面关闭场景）
+   */
+  sendBeacon(eventType, data = {}) {
+    if (typeof navigator === "undefined" || typeof navigator.sendBeacon !== "function") {
+      return false;
+    }
+    const event = {
+      eventType,
+      uid: this.currentUserId || void 0,
+      linkId: data.linkId || eventType,
+      eventData: data
+    };
+    const payload = this.transformToPayload(event);
+    const body = JSON.stringify(payload);
+    const blob = new Blob([body], { type: "application/json" });
+    const endpoint = `${this.config.apiEndpoint}/api/track/beacon`;
+    const success = navigator.sendBeacon(endpoint, blob);
+    this.log("sendBeacon \u53D1\u9001:", success ? "\u6210\u529F" : "\u5931\u8D25", payload);
+    return success;
+  }
+  /**
+   * 获取 beacon 端点地址
+   */
+  getBeaconEndpoint() {
+    return `${this.config.apiEndpoint}/api/track/beacon`;
+  }
+  /**
    * 销毁 SDK
    */
   destroy() {
@@ -647,7 +718,7 @@ var _TrackingSDK = class _TrackingSDK {
    * 生成会话 ID
    */
   generateSessionId() {
-    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
   }
   /**
    * 延迟函数

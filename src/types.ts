@@ -5,19 +5,13 @@
 
 /** 事件类型枚举 */
 export enum EventType {
-  /** 用户注册 */
   REGISTER = 'register',
-  /** 用户订阅 */
   SUBSCRIBE = 'subscribe',
-  /** 用户登录 */
   LOGIN = 'login',
-  /** 用户登出 */
   LOGOUT = 'logout',
-  /** 页面访问 */
   VISIT = 'visit',
-  /** 点击事件 */
   CLICK = 'click',
-  /** 自定义事件 */
+  PAGE_STAY = 'page_stay',
   CUSTOM = 'custom',
 }
 
@@ -161,12 +155,21 @@ export interface VisitEvent extends BaseEvent {
 /** 点击事件 */
 export interface ClickEvent extends BaseEvent {
   eventType: EventType.CLICK
-  /** 元素 ID */
   elementId?: string
-  /** 元素文本 */
   elementText?: string
-  /** 元素类型（例如：button, a, div） */
   elementType?: string
+}
+
+/** 页面停留事件 */
+export interface PageStayEvent extends BaseEvent {
+  eventType: EventType.PAGE_STAY
+  path: string
+  toPath?: string
+  enterAt: number
+  leaveAt: number
+  durationMs: number
+  activeMs: number
+  leaveReason: 'route_change' | 'pagehide'
 }
 
 /** SDK 配置 */

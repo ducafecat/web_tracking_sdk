@@ -26,7 +26,9 @@
 - 🌐 **多环境支持**：浏览器、Node.js、Nuxt 4 等
 - 🎨 **易于使用**：简洁的 API 设计，开箱即用
 - 🔄 **重试机制**：失败自动重试（指数退避策略）
-- 💾 **本地存储**：支持离线数据持久化
+- 🚚 **传输策略**：常规上报使用 `GET + URLSearchParams`，页面关闭场景支持 `sendBeacon`
+- 📊 **停留时长埋点**：支持 `page_stay` 事件及 beacon 快速上报
+- 💾 **本地存储**：支持离线数据持久化与失败事件恢复
 
 ## 📦 安装
 
@@ -60,8 +62,8 @@ const tracker = new TrackingSDK({
   enableStorage: true,
 })
 
-// 2. 初始化 SDK
-await tracker.init()
+// 2. 初始化 SDK（同步方法）
+tracker.init()
 
 // 3. 设置用户 ID（登录后调用）
 tracker.setUserId('user_123')
@@ -113,7 +115,7 @@ tracker.trackCustom('video_play', {
 import { defineNuxtPlugin } from '#app'
 import { TrackingSDK } from '@holink/tracking-sdk'
 
-export default defineNuxtPlugin(async (nuxtApp) => {
+export default defineNuxtPlugin((nuxtApp) => {
   const config = useRuntimeConfig()
   
   const tracker = new TrackingSDK({
@@ -123,7 +125,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     enableStorage: true,
   })
 
-  await tracker.init()
+  tracker.init()
 
   // 监听路由变化
   nuxtApp.hook('page:finish', () => {
@@ -151,7 +153,11 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 const { $tracker, $trackClick } = useNuxtApp()
 
 function handleButtonClick() {
-  $trackClick('subscribe_button', '立即订阅')
+  $trackClick({
+    elementId: 'subscribe_button',
+    elementText: '订阅',
+    elementType: 'button',
+  })
 }
 </script>
 
@@ -212,18 +218,19 @@ enum EventType {
   LOGOUT = 'logout',       // 用户登出
   VISIT = 'visit',         // 页面访问
   CLICK = 'click',         // 点击事件
+  PAGE_STAY = 'page_stay', // 页面停留
   CUSTOM = 'custom',       // 自定义事件
 }
 ```
 
 ### 核心方法
 
-#### `init(): Promise<void>`
+#### `init(): void`
 
 初始化 SDK（恢复本地数据、设置自动采集等）
 
 ```typescript
-await tracker.init()
+tracker.init()
 ```
 
 #### `setUserId(userId: string): void`
@@ -287,12 +294,28 @@ tracker.trackLogin({
 tracker.trackLogout()
 ```
 
-#### `trackPageView(path?: string, title?: string): void`
+#### `trackPageView(path?: string, title?: string, data_id?: string): void`
 
 追踪页面访问事件（`trackVisit` 的别名）
 
 ```typescript
 tracker.trackPageView('/dashboard', '用户控制台')
+```
+
+#### `trackPageStay(data: Omit<PageStayEvent, 'eventType'>): void`
+
+追踪页面停留事件
+
+```typescript
+tracker.trackPageStay({
+  path: '/pricing',
+  toPath: '/checkout',
+  enterAt: Date.now() - 32000,
+  leaveAt: Date.now(),
+  durationMs: 32000,
+  activeMs: 25000,
+  leaveReason: 'route_change',
+})
 ```
 
 #### `trackClick(data: Partial<ClickEvent> | string): void`
@@ -341,6 +364,21 @@ await tracker.sendImmediately({
 })
 ```
 
+#### `sendPageStayBeacon(data: Omit<PageStayEvent, 'eventType'>): boolean`
+
+通过 `sendBeacon` 上报页面停留事件（适用于页面关闭场景）
+
+```typescript
+tracker.sendPageStayBeacon({
+  path: '/docs',
+  enterAt: Date.now() - 5000,
+  leaveAt: Date.now(),
+  durationMs: 5000,
+  activeMs: 5000,
+  leaveReason: 'pagehide',
+})
+```
+
 #### `flush(): void`
 
 手动刷新队列（立即发送所有待发送事件）
@@ -384,17 +422,13 @@ tracker.destroy()
   "referer": "https://google.com",
   "userAgent": "Mozilla/5.0...",
   "sessionId": "1700000000000-abc123",
-  "eventData": {
-    "source": "email",
-    "_clientInfo": {
-      "url": "https://your-site.com/register",
-      "screenResolution": "1920x1080",
-      "viewport": "1440x900",
-      "language": "zh-CN",
-      "timezone": "Asia/Shanghai",
-      "platform": "MacIntel"
-    }
-  }
+  "source": "email",
+  "url": "https://your-site.com/register",
+  "screenResolution": "1920x1080",
+  "viewport": "1440x900",
+  "language": "zh-CN",
+  "timezone": "Asia/Shanghai",
+  "platform": "MacIntel"
 }
 ```
 
