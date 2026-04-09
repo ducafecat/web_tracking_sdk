@@ -26,6 +26,8 @@ interface TrackingEventPayload {
     x_uid?: string;
     /** 链接 ID（可选，用于关联具体业务）- 注意字段名是 x_link_id */
     x_link_id?: string;
+    /** 链接类型（可选，用于补充链接业务类型）- 注意字段名是 x_link_type */
+    x_link_type?: string;
     /** 事件时间戳（Unix 时间戳，精确到毫秒） */
     timestamp: number;
     /** 请求 URI（页面路径 + 查询参数） */
@@ -80,6 +82,8 @@ interface BaseEvent {
     uid?: string;
     /** 链接 ID（业务标识） */
     linkId?: string;
+    /** 链接类型（业务类型补充） */
+    linkType?: string;
     /** 事件附加数据 */
     eventData?: Record<string, any>;
 }

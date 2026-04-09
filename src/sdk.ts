@@ -130,6 +130,7 @@ export class TrackingSDK {
       eventType: EventType.REGISTER,
       uid: data.uid || this.currentUserId || undefined,
       linkId: data.linkId || 'register',
+      linkType: data.linkType,
       eventData: {
         source: data.source,
         ...data.eventData,
@@ -147,6 +148,7 @@ export class TrackingSDK {
       eventType: EventType.SUBSCRIBE,
       uid: data.uid || this.currentUserId || undefined,
       linkId: data.linkId || 'subscribe',
+      linkType: data.linkType,
       eventData: {
         plan: data.plan,
         duration: data.duration,
@@ -166,6 +168,7 @@ export class TrackingSDK {
       eventType: EventType.LOGIN,
       uid: data.uid || this.currentUserId || undefined,
       linkId: data.linkId || 'login',
+      linkType: data.linkType,
       eventData: {
         loginMethod: data.loginMethod,
         ...data.eventData,
@@ -234,6 +237,7 @@ export class TrackingSDK {
         eventType: EventType.CLICK,
         uid: data.uid || this.currentUserId || undefined,
         linkId: data.linkId || 'click_event',
+        linkType: data.linkType,
       }
 
       // 添加可选字段
@@ -256,6 +260,7 @@ export class TrackingSDK {
       eventType: EventType.PAGE_STAY,
       uid: this.currentUserId || undefined,
       linkId: 'page_stay',
+      linkType: data.linkType,
       eventData: {
         path: data.path,
         toPath: data.toPath,
@@ -296,6 +301,7 @@ export class TrackingSDK {
       eventType: eventName,
       uid: this.currentUserId || undefined,
       linkId: (data.linkId as string) || 'custom',
+      linkType: data.linkType as string,
       eventData: data,
     }
 
@@ -335,6 +341,7 @@ export class TrackingSDK {
       siteDomain: this.config.siteDomain,
       x_uid: event.uid,
       x_link_id: event.linkId,
+      x_link_type: event.linkType,
       timestamp: Date.now(),
       uri: isWindowAvailable ? window.location.pathname + window.location.search : '',
       referer: isDocumentAvailable ? document.referrer || undefined : undefined,
@@ -554,6 +561,7 @@ export class TrackingSDK {
       eventType,
       uid: this.currentUserId || undefined,
       linkId: (data.linkId as string) || eventType,
+      linkType: data.linkType as string,
       eventData: data,
     }
 

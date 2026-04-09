@@ -12,8 +12,8 @@ POST /api/track/batch
 Body:
 {
   "events": [
-    { eventType, siteDomain, x_uid, x_link_id, ... },
-    { eventType, siteDomain, x_uid, x_link_id, ... }
+    { eventType, siteDomain, x_uid, x_link_id, x_link_type, ... },
+    { eventType, siteDomain, x_uid, x_link_id, x_link_type, ... }
   ]
 }
 ```
@@ -106,6 +106,7 @@ A: SDK 会自动采集以下信息：
 - 事件类型（eventType）
 - 用户 UID（x_uid，需要手动设置）
 - 链接 ID（x_link_id）
+- 链接类型（x_link_type）
 - 时间戳（timestamp）
 - 页面 URI（uri）
 - 来源页面（referer）
@@ -156,6 +157,7 @@ const tracker = new TrackingSDK({
 | `siteDomain`           | `siteDomain`    | 客户端 | 站点域名（多站点统计）      |
 | `uid` → `x_uid`        | `x_uid`         | 客户端 | 用户 UID（业务系统 ID）     |
 | `linkId` → `x_link_id` | `x_link_id`     | 客户端 | 链接 ID（业务标识）         |
+| `linkType` → `x_link_type` | `x_link_type`       | 客户端 | 链接类型（业务类型补充）    |
 | `timestamp`            | `timestamp`     | 客户端 | 事件时间戳（毫秒）          |
 | -                      | `date`          | 服务端 | 日期字符串（YYYY-MM-DD）    |
 | `uri`                  | `uri`           | 客户端 | 请求 URI                    |

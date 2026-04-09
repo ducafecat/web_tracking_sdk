@@ -13,7 +13,7 @@
 
 ### 🏗️ 架构设计
 
-- ✅ **数据格式与后端 API 完全匹配**：扁平化结构，字段命名一致（`x_uid`、`x_link_id` 等）
+- ✅ **数据格式与后端 API 完全匹配**：扁平化结构，字段命名一致（`x_uid`、`x_link_id`、`x_link_type` 等）
 - ✅ **职责划分清晰**：客户端只采集基础信息，服务端负责扩展字段（IP、地理位置、UA 解析等）
 - ✅ **批量上报机制**：智能批量上报，减少网络请求
 - ✅ **离线重试支持**：本地存储保证数据不丢失
@@ -417,6 +417,7 @@ tracker.destroy()
   "siteDomain": "holink.com",
   "x_uid": "user_123",
   "x_link_id": "register_form",
+  "x_link_type": "button",
   "timestamp": 1700000000000,
   "uri": "/register",
   "referer": "https://google.com",

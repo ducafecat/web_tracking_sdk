@@ -104,7 +104,7 @@
 ## 🎯 核心特性实现
 
 ### 1. 数据格式完全匹配后端 API
-- ✅ 字段命名一致（`x_uid`、`x_link_id`、`referer` 等）
+- ✅ 字段命名一致（`x_uid`、`x_link_id`、`x_link_type`、`referer` 等）
 - ✅ 扁平化数据结构
 - ✅ 站点域名支持（`siteDomain`）
 - ✅ 会话 ID（`sessionId`）

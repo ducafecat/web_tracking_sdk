@@ -274,6 +274,7 @@ var _TrackingSDK = class _TrackingSDK {
       eventType: "register" /* REGISTER */,
       uid: data.uid || this.currentUserId || void 0,
       linkId: data.linkId || "register",
+      linkType: data.linkType,
       eventData: {
         source: data.source,
         ...data.eventData
@@ -289,6 +290,7 @@ var _TrackingSDK = class _TrackingSDK {
       eventType: "subscribe" /* SUBSCRIBE */,
       uid: data.uid || this.currentUserId || void 0,
       linkId: data.linkId || "subscribe",
+      linkType: data.linkType,
       eventData: {
         plan: data.plan,
         duration: data.duration,
@@ -306,6 +308,7 @@ var _TrackingSDK = class _TrackingSDK {
       eventType: "login" /* LOGIN */,
       uid: data.uid || this.currentUserId || void 0,
       linkId: data.linkId || "login",
+      linkType: data.linkType,
       eventData: {
         loginMethod: data.loginMethod,
         ...data.eventData
@@ -363,7 +366,8 @@ var _TrackingSDK = class _TrackingSDK {
       const clickEvent = {
         eventType: "click" /* CLICK */,
         uid: data.uid || this.currentUserId || void 0,
-        linkId: data.linkId || "click_event"
+        linkId: data.linkId || "click_event",
+        linkType: data.linkType
       };
       if (data.elementId !== void 0) clickEvent.elementId = data.elementId;
       if (data.elementText !== void 0) clickEvent.elementText = data.elementText;
@@ -381,6 +385,7 @@ var _TrackingSDK = class _TrackingSDK {
       eventType: "page_stay" /* PAGE_STAY */,
       uid: this.currentUserId || void 0,
       linkId: "page_stay",
+      linkType: data.linkType,
       eventData: {
         path: data.path,
         toPath: data.toPath,
@@ -418,6 +423,7 @@ var _TrackingSDK = class _TrackingSDK {
       eventType: eventName,
       uid: this.currentUserId || void 0,
       linkId: data.linkId || "custom",
+      linkType: data.linkType,
       eventData: data
     };
     this.track(event);
@@ -447,6 +453,7 @@ var _TrackingSDK = class _TrackingSDK {
       siteDomain: this.config.siteDomain,
       x_uid: event.uid,
       x_link_id: event.linkId,
+      x_link_type: event.linkType,
       timestamp: Date.now(),
       uri: isWindowAvailable ? window.location.pathname + window.location.search : "",
       referer: isDocumentAvailable ? document.referrer || void 0 : void 0,
@@ -619,6 +626,7 @@ var _TrackingSDK = class _TrackingSDK {
       eventType,
       uid: this.currentUserId || void 0,
       linkId: data.linkId || eventType,
+      linkType: data.linkType,
       eventData: data
     };
     const payload = this.transformToPayload(event);
